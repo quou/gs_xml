@@ -1,0 +1,7 @@
+<root_node>
+
+<some_child some_attrib="some_str_val" some_other_attrib="30">
+Hello, world!
+</some_child>
+
+</root_node>
