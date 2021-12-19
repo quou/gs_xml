@@ -1,7 +1,3 @@
-<root_node>
+<test thing="10.4" yes="true">Hello, world!</test>
 
-<some_child some_attrib="some_str_val" some_other_attrib="30">
-Hello, world!
-</some_child>
-
-</root_node>
+<another_test some_attrib="Hello">I'm some text!</another_test>
