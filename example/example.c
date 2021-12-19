@@ -12,7 +12,7 @@ void init()
         gs_xml_node_t* node = doc->nodes + i;
 
         printf("XML Node: %s\n", doc->nodes[i].name);
-        puts("\tChildren:");
+        puts("\tAttributes:");
         for (
             gs_hash_table_iter it = gs_hash_table_iter_new(node->attributes);
             gs_hash_table_iter_valid(node->attributes, it);

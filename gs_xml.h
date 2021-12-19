@@ -174,8 +174,6 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
             	for (; *c != '>' && *c != ' '; c++)
                     node_name_len++;
 
-                printf("%.*s\n", node_name_len, node_name_start);
-
                 if (*c != '>')
                 {
                     while (*c != '>')
@@ -203,9 +201,6 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                         }
 
                         c++;
-
-                        printf("%.*s\n", attrib_name_len, attrib_name_start);
-                        printf("%.*s\n", attrib_text_len, attrib_text_start);
 
                         gs_xml_attribute_t attrib = { 0 };
                         attrib.name = gs_xml_copy_string(attrib_name_start, attrib_name_len);
@@ -253,8 +248,6 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                 {
                     text_len++;
                 }
-
-                printf("%.*s\n", text_len, text_start);
 
 	            cur_node.name = gs_xml_copy_string(node_name_start, node_name_len);
                 cur_node.text = gs_xml_copy_string(text_start, text_len);
