@@ -55,7 +55,7 @@ A more complete example can be found in [example](https://github.com/veridisquot
 gs_xml_node_t* node = gs_xml_find_node(doc, "test_node");
 
 // To find a child
-gs_xml_node_t* child = gs_xml_find_node(node, "test_child");
+gs_xml_node_t* child = gs_xml_find_node_child(node, "test_child");
 
 // To find an attribute
 gs_xml_attribute_t* attrib = gs_xml_find_attribute(node, "test_attrib");
