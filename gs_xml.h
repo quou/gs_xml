@@ -44,11 +44,35 @@ GS_API_DECL void gs_xml_free(gs_xml_document_t* document);
 
 GS_API_DECL gs_xml_attribute_t gs_xml_find_attribute(gs_xml_node_t* node, const char* name);
 
+GS_API_DECL const char* gs_xml_get_error();
+
 #ifdef GS_XML_IMPL
+
+#define GS_XML_EXPECT(c_, e_) \
+    if (*c_ != e_) \
+    { \
+        gs_xml_emit_error("Expected " #e_ "."); \
+        return NULL; \
+    }
+
+#define GS_XML_EXPECT_NOT_END(c_) \
+    if (!*c) \
+    { \
+        gs_xml_emit_error("Unexpected end."); \
+        return NULL; \
+    }
+
+static const char* gs_xml_error = NULL;
+
+static void gs_xml_emit_error(const char* error)
+{
+    gs_xml_error = error;
+}
 
 static char* gs_xml_copy_string(const char* str, uint32_t len)
 {
     char* r = gs_malloc(len + 1);
+    if (!r) { gs_xml_emit_error("Out of memory!"); return NULL; }
     r[len] = '\0';
     
     for (uint32_t i = 0; i < len; i++)
@@ -138,7 +162,11 @@ gs_xml_document_t* gs_xml_parse_file(const char* path)
     size_t size;
     char* source = gs_read_file_contents_into_string_null_term(path, "r", &size);
 
-    if (!source) return NULL;
+    if (!source)
+    {
+        gs_xml_emit_error("Failed to read file!");
+        return NULL;
+    }
 
     gs_xml_document_t* doc = gs_xml_parse(source);
 
@@ -147,6 +175,7 @@ gs_xml_document_t* gs_xml_parse_file(const char* path)
     return doc;
 }
 
+// Parse an XML block. Returns an array of nodes in the block.
 static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_t length)
 {
     gs_dyn_array(gs_xml_node_t) r = NULL;
@@ -158,6 +187,7 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
         if (*c == '<')
         {
             c++;
+            GS_XML_EXPECT_NOT_END(c);
 
             if (inside && *c == '/')
                 inside = false;
@@ -178,18 +208,26 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                 {
                     while (*c != '>')
                     {
-                        c++;
+                        while (gs_char_is_white_space(*c)) c++;
 
                         const char* attrib_name_start = c;
                         uint32_t attrib_name_len = 0;
 
-                        while (*c != '=')
+                        while (gs_char_is_alpha(*c) || gs_char_is_numeric(*c) || *c == '_')
                         {
                             c++;
                             attrib_name_len++;
+                            GS_XML_EXPECT_NOT_END(c);
                         }
 
-                        c += 2;
+                        while (*c != '"')
+                        {
+                            c++;
+                            GS_XML_EXPECT_NOT_END(c);
+                        }
+
+                        c++;
+                        GS_XML_EXPECT_NOT_END(c);
 
                         const char* attrib_text_start = c;
                         uint32_t attrib_text_len = 0;
@@ -198,9 +236,11 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                         {
                             c++;
                             attrib_text_len++;
+                            GS_XML_EXPECT_NOT_END(c);
                         }
 
                         c++;
+                        GS_XML_EXPECT_NOT_END(c);
 
                         gs_xml_attribute_t attrib = { 0 };
                         attrib.name = gs_xml_copy_string(attrib_name_start, attrib_name_len);
@@ -234,10 +274,11 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
             }
             else
             {
-                while (*c != '>') c++;
+                while (*c != '>') { c++; GS_XML_EXPECT_NOT_END(c); }
             }
 
             c++;
+            GS_XML_EXPECT_NOT_END(c);
 
             if (inside)
             {
@@ -253,12 +294,14 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                 {
                     if (*c == '<' && *(c + 1) == '/')
                     {
-                        c += 2;
+                        c++; GS_XML_EXPECT_NOT_END(c);
+                        c++; GS_XML_EXPECT_NOT_END(c);
                         end_start = c;
                         end_len = 0;
                         while (*c != '>') {
                             end_len++;
                             c++;
+                            GS_XML_EXPECT_NOT_END(c);
                         }
 
                         if (gs_xml_string_equal(end_start, end_len, cur_node.name))
@@ -274,6 +317,8 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
 
                     c++;
                     text_len++;
+
+                    GS_XML_EXPECT_NOT_END(c);
                 }
 
                 cur_node.text = gs_xml_copy_string(text_start, text_len);
@@ -294,9 +339,17 @@ gs_xml_document_t* gs_xml_parse(const char* source)
 {
     if (!source) return NULL;
 
+    gs_xml_error = NULL;
     gs_xml_document_t* doc = gs_calloc(1, sizeof(gs_xml_document_t));
+    if (!doc) { gs_xml_emit_error("Out of memory!"); return NULL; }
 
     doc->nodes = gs_xml_parse_block(source, gs_string_length(source));
+
+    if (gs_xml_error)
+    {
+        gs_xml_free(doc);
+        return NULL;
+    }
 
     return doc;
 }
@@ -315,6 +368,11 @@ void gs_xml_free(gs_xml_document_t* document)
 gs_xml_attribute_t gs_xml_find_attribute(gs_xml_node_t* node, const char* name)
 {
     return gs_hash_table_get(node->attributes, gs_xml_hash_string(name, gs_string_length(name)));
+}
+
+const char* gs_xml_get_error()
+{
+    return gs_xml_error;
 }
 
 #undef GS_XML_IMPL

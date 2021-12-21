@@ -1,4 +1,4 @@
-<test some_attrib="I'm an attribute!" some_number="384.7" some_bool="true">
+<test some_attrib="I'm an attribute!" some_number1  =     "384.7" some_bool="true">
 	<test_child>Hello, world!</test_child>
 	<other_test_child some_bool="false">
 		<other_test_child_child>Hello there!</other_test_child_child>

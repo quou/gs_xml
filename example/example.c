@@ -49,6 +49,11 @@ void print_xml_node(gs_xml_node_t* node, int indent)
 void init()
 {
     gs_xml_document_t* doc = gs_xml_parse_file("./test.xml");
+    if (!doc)
+    {
+        printf("XML Parse Error: %s\n", gs_xml_get_error());
+        return;
+    }
 
     for (uint32_t i = 0; i < gs_dyn_array_size(doc->nodes); i++)
     {
