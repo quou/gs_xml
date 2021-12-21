@@ -62,6 +62,8 @@ void init()
         print_xml_node(node, 0);
     }
 
+    printf("%g\n", gs_xml_find_attribute(gs_xml_find_node_child(gs_xml_find_node(doc, "test"), "some_thing"), "thing1")->value.number);
+
     gs_xml_free(doc);
 }
 
