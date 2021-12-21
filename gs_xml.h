@@ -38,6 +38,16 @@ typedef struct gs_xml_document_t
     gs_dyn_array(gs_xml_node_t) nodes;
 } gs_xml_document_t;
 
+typedef struct gs_xml_node_iter_t
+{
+    gs_xml_document_t* doc;
+    gs_xml_node_t* node;
+    const char* name;
+    uint32_t idx;
+
+    gs_xml_node_t* current;
+} gs_xml_node_iter_t;
+
 GS_API_DECL gs_xml_document_t* gs_xml_parse(const char* source);
 GS_API_DECL gs_xml_document_t* gs_xml_parse_file(const char* path);
 GS_API_DECL void gs_xml_free(gs_xml_document_t* document);
@@ -47,6 +57,10 @@ GS_API_DECL gs_xml_node_t* gs_xml_find_node(gs_xml_document_t* doc, const char* 
 GS_API_DECL gs_xml_node_t* gs_xml_find_node_child(gs_xml_node_t* node, const char* name);
 
 GS_API_DECL const char* gs_xml_get_error();
+
+GS_API_DECL gs_xml_node_iter_t gs_xml_new_node_iter(gs_xml_document_t* doc, const char* name);
+GS_API_DECL gs_xml_node_iter_t gs_xml_new_node_child_iter(gs_xml_node_t* node, const char* name);
+GS_API_DECL bool gs_xml_node_iter_next(gs_xml_node_iter_t* iter);
 
 #ifdef GS_XML_IMPL
 
@@ -221,7 +235,7 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
         {
             c++;
             GS_XML_EXPECT_NOT_END(c);
-
+            
             if (*c == '?') // Skip the XML header.
             {
                 c++;
@@ -485,6 +499,57 @@ gs_xml_node_t* gs_xml_find_node_child(gs_xml_node_t* node, const char* name)
 const char* gs_xml_get_error()
 {
     return gs_xml_error;
+}
+
+GS_API_DECL gs_xml_node_iter_t gs_xml_new_node_iter(gs_xml_document_t* doc, const char* name)
+{
+    gs_xml_node_iter_t it = {
+        .doc = doc,
+        .name = name,
+        .idx = 0
+    };
+
+    return it;
+}
+
+GS_API_DECL gs_xml_node_iter_t gs_xml_new_node_child_iter(gs_xml_node_t* parent, const char* name)
+{
+    gs_xml_node_iter_t it = {
+        .node = parent,
+        .name = name,
+        .idx = 0
+    };
+
+    return it;
+}
+
+GS_API_DECL bool gs_xml_node_iter_next(gs_xml_node_iter_t* iter)
+{
+    if (iter->node)
+    {
+        for (uint32_t i = iter->idx; i < gs_dyn_array_size(iter->node->children); i++) {
+            if (gs_string_compare_equal(iter->name, iter->node->children[i].name))
+            {
+                iter->current = iter->node->children + i;
+                iter->idx = i + 1;
+                return true;
+            }
+        }
+
+        return false;
+    }
+    else
+    {
+        for (uint32_t i = iter->idx; i < gs_dyn_array_size(iter->doc->nodes); i++) {
+            if (gs_string_compare_equal(iter->name, iter->doc->nodes[i].name))
+            {
+                iter->current = iter->doc->nodes + i;
+                iter->idx = i + 1;
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 #undef GS_XML_IMPL
