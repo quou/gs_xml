@@ -23,7 +23,7 @@ It supports the following entities:
 | Character | Entity |
 | --- | --- |
 | & | `&amp;` |
-| \ | `&apos;` |
+| ' | `&apos;` |
 | " | `&quot;` |
 | < | `&lt;` |
 | > | `&gt;` |
