@@ -1,3 +1,6 @@
-<test thing="10.4" yes="true">Hello, world!</test>
-
-<another_test some_attrib="Hello">I'm some text!</another_test>
+<test some_attrib="I'm an attribute!" some_number="384.7" some_bool="true">
+	<test_child>Hello, world!</test_child>
+	<other_test_child some_bool="false">
+		<other_test_child_child>Hello there!</other_test_child_child>
+	</other_test_child>
+</test>

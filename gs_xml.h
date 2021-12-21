@@ -153,7 +153,7 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
 
     bool inside = false;
 
-    for (const char* c = start; c < start + length; c++)
+    for (const char* c = start; *c && c < start + length; c++)
     {
         if (*c == '<')
         {
@@ -244,13 +244,42 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                 const char* text_start = c;
                 uint32_t text_len = 0;
 
-                for (; *c != '<'; c++)
+                const char* end_start = c;
+                uint32_t end_len = 0;
+
+	            cur_node.name = gs_xml_copy_string(node_name_start, node_name_len);
+
+                for (uint32_t i = 0; i < length; i++)
                 {
+                    if (*c == '<' && *(c + 1) == '/')
+                    {
+                        c += 2;
+                        end_start = c;
+                        end_len = 0;
+                        while (*c != '>') {
+                            end_len++;
+                            c++;
+                        }
+
+                        if (gs_xml_string_equal(end_start, end_len, cur_node.name))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            text_len += end_len + 2;
+                            continue;
+                        }
+                    }
+
+                    c++;
                     text_len++;
                 }
 
-	            cur_node.name = gs_xml_copy_string(node_name_start, node_name_len);
                 cur_node.text = gs_xml_copy_string(text_start, text_len);
+
+                cur_node.children = gs_xml_parse_block(text_start, text_len);
+
                 gs_dyn_array_push(r, cur_node);
 
                 c--;
