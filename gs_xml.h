@@ -249,7 +249,7 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
 
                 if (*c != '>')
                 {
-                    while (*c != '>')
+                    while (*c != '>' && *c != '/')
                     {
                         while (gs_char_is_white_space(*c)) c++;
 
@@ -314,6 +314,15 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                             attrib);
                     }
                 }
+
+                if (*c == '/') // For nodes without any text.
+                {
+                    c++;
+                    GS_XML_EXPECT_NOT_END(c);
+                    cur_node.name = gs_xml_copy_string(node_name_start, node_name_len);
+                    gs_dyn_array_push(r, cur_node);
+                    inside = false;
+                }
             }
             else
             {
@@ -331,7 +340,7 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                 const char* end_start = c;
                 uint32_t end_len = 0;
 
-	            cur_node.name = gs_xml_copy_string(node_name_start, node_name_len);
+                cur_node.name = gs_xml_copy_string(node_name_start, node_name_len);
 
                 for (uint32_t i = 0; i < length; i++)
                 {
