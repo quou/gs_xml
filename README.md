@@ -71,6 +71,6 @@ printf("%s\n", node->name);
 printf("%s\n", attrib->name);
 
 printf("%g\n", number_attrib->value.number);
-printf("%s\n", number_attrib->value.string);
-printf("%s\n", number_attrib->value.boolean ? "true" : "false");
+printf("%s\n", string_attrib->value.string);
+printf("%s\n", boolean_attrib->value.boolean ? "true" : "false");
 ```
