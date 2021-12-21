@@ -62,6 +62,21 @@ GS_API_DECL const char* gs_xml_get_error();
         return NULL; \
     }
 
+typedef struct gs_xml_entity_t
+{
+    char character;
+    const char* name;
+} gs_xml_entity_t;
+
+static gs_xml_entity_t gs_xml_entities[] =
+{
+    { '&',  "&amp;" },
+    { '\'', "&apos;" },
+    { '"',  "&quot;" },
+    { '<',  "&lt;" },
+    { '>',  "&gt;" }
+};
+
 static const char* gs_xml_error = NULL;
 
 static void gs_xml_emit_error(const char* error)
@@ -157,22 +172,38 @@ static void gs_xml_node_free(gs_xml_node_t* node)
     gs_dyn_array_free(node->children);
 }
 
-gs_xml_document_t* gs_xml_parse_file(const char* path)
+static char* gs_xml_process_text(const char* start, uint32_t length)
 {
-    size_t size;
-    char* source = gs_read_file_contents_into_string_null_term(path, "r", &size);
+    char* r = gs_malloc(length + 1);
+    
+    uint32_t len_sub = 0;
 
-    if (!source)
+    for (uint32_t i = 0, ri = 0; i < length; i++, ri++)
     {
-        gs_xml_emit_error("Failed to read file!");
-        return NULL;
+        bool changed = false;
+        if (start[i] == '&')
+        {
+        	for (uint32_t ii = 0; ii < sizeof(gs_xml_entities) / sizeof(*gs_xml_entities); ii++)
+        	{
+            	uint32_t ent_len = gs_string_length(gs_xml_entities[ii].name);
+            	if (gs_xml_string_equal(start + i, ent_len, gs_xml_entities[ii].name))
+            	{
+                	r[ri] = gs_xml_entities[ii].character;
+                	i += ent_len - 1;
+                	len_sub += ent_len - 1;
+                	changed = true;
+                	break;
+            	}
+        	}
+        }
+
+        if (!changed)
+            r[ri] = start[i];
     }
 
-    gs_xml_document_t* doc = gs_xml_parse(source);
+    r[length - len_sub] = '\0';
 
-    gs_free(source);
-
-    return doc;
+    return r;
 }
 
 // Parse an XML block. Returns an array of nodes in the block.
@@ -275,7 +306,7 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                         else
                         {
                             attrib.type = GS_XML_ATTRIBUTE_STRING;
-                            attrib.value.string = gs_xml_copy_string(attrib_text_start, attrib_text_len);
+                            attrib.value.string = gs_xml_process_text(attrib_text_start, attrib_text_len);
                         }
 
                         gs_hash_table_insert(cur_node.attributes,
@@ -333,9 +364,11 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                     GS_XML_EXPECT_NOT_END(c);
                 }
 
-                cur_node.text = gs_xml_copy_string(text_start, text_len);
-
                 cur_node.children = gs_xml_parse_block(text_start, text_len);
+                if (gs_dyn_array_size(cur_node.children) == 0)
+                    cur_node.text = gs_xml_process_text(text_start, text_len);
+                else
+                    cur_node.text = gs_xml_copy_string(text_start, text_len);
 
                 gs_dyn_array_push(r, cur_node);
 
@@ -345,6 +378,24 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
     }
 
     return r;
+}
+
+gs_xml_document_t* gs_xml_parse_file(const char* path)
+{
+    size_t size;
+    char* source = gs_read_file_contents_into_string_null_term(path, "r", &size);
+
+    if (!source)
+    {
+        gs_xml_emit_error("Failed to read file!");
+        return NULL;
+    }
+
+    gs_xml_document_t* doc = gs_xml_parse(source);
+
+    gs_free(source);
+
+    return doc;
 }
 
 gs_xml_document_t* gs_xml_parse(const char* source)
