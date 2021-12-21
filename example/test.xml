@@ -4,5 +4,10 @@
 	<other_test_child some_bool="false">
 		<other_test_child_child>Hello there! &apos; &amp; &quot; &lt; &gt;</other_test_child_child>
 	</other_test_child>
+
+	<!-- Hello, I'm a comment. -->
+
 	<some_thing thing="Haha yes" thing1 = "33"/>
+
+	<!-- I'm another comment. -->
 </test>

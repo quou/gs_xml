@@ -233,6 +233,18 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
                 }
                 continue;
             }
+            else if (gs_xml_string_equal(c, 3, "!--")) // Skip comments.
+            {
+                c++; GS_XML_EXPECT_NOT_END(c);
+                c++; GS_XML_EXPECT_NOT_END(c);
+                c++; GS_XML_EXPECT_NOT_END(c);
+                while (!gs_xml_string_equal(c, 3, "-->"))
+                {
+                    c++; GS_XML_EXPECT_NOT_END(c);
+                }
+
+                continue;
+            }
 
             if (inside && *c == '/')
                 inside = false;
