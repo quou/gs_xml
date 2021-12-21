@@ -43,6 +43,8 @@ GS_API_DECL gs_xml_document_t* gs_xml_parse_file(const char* path);
 GS_API_DECL void gs_xml_free(gs_xml_document_t* document);
 
 GS_API_DECL gs_xml_attribute_t gs_xml_find_attribute(gs_xml_node_t* node, const char* name);
+GS_API_DECL gs_xml_node_t gs_xml_find_node(gs_xml_document_t* doc, const char* name);
+GS_API_DECL gs_xml_node_t gs_xml_find_node_child(gs_xml_node_t* node, const char* name);
 
 GS_API_DECL const char* gs_xml_get_error();
 
@@ -440,6 +442,28 @@ void gs_xml_free(gs_xml_document_t* document)
 gs_xml_attribute_t gs_xml_find_attribute(gs_xml_node_t* node, const char* name)
 {
     return gs_hash_table_get(node->attributes, gs_xml_hash_string(name, gs_string_length(name)));
+}
+
+gs_xml_node_t gs_xml_find_node(gs_xml_document_t* doc, const char* name)
+{
+    for (uint32_t i = 0; i < gs_dyn_array_size(doc->nodes); i++)
+    {
+        if (gs_string_compare_equal(name, doc->nodes[i].name))
+        {
+            return doc->nodes[i];
+        }
+    }
+}
+
+gs_xml_node_t gs_xml_find_node_child(gs_xml_node_t* node, const char* name)
+{
+    for (uint32_t i = 0; i < gs_dyn_array_size(doc->children); i++)
+    {
+        if (gs_string_compare_equal(name, doc->children[i].name))
+        {
+            return doc->nodes[i];
+        }
+    }
 }
 
 const char* gs_xml_get_error()
