@@ -56,7 +56,7 @@ GS_API_DECL const char* gs_xml_get_error();
     }
 
 #define GS_XML_EXPECT_NOT_END(c_) \
-    if (!*c) \
+    if (!*(c_)) \
     { \
         gs_xml_emit_error("Unexpected end."); \
         return NULL; \
@@ -188,6 +188,18 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
         {
             c++;
             GS_XML_EXPECT_NOT_END(c);
+
+            if (*c == '?') // Skip the XML header.
+            {
+                c++;
+                GS_XML_EXPECT_NOT_END(c);
+                while (*c != '>')
+                {
+                    c++;
+                    GS_XML_EXPECT_NOT_END(c);
+                }
+                continue;
+            }
 
             if (inside && *c == '/')
                 inside = false;
