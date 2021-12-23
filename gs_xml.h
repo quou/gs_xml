@@ -467,7 +467,11 @@ void gs_xml_free(gs_xml_document_t* document)
 
 gs_xml_attribute_t* gs_xml_find_attribute(gs_xml_node_t* node, const char* name)
 {
-    return gs_hash_table_getp(node->attributes, gs_xml_hash_string(name, gs_string_length(name)));
+	if (!gs_hash_table_exists(node->attributes, gs_xml_hash_string(name, gs_string_length(name)))) {
+		return NULL;
+	} else {
+    	return gs_hash_table_getp(node->attributes, gs_xml_hash_string(name, gs_string_length(name)));
+    }
 }
 
 gs_xml_node_t* gs_xml_find_node(gs_xml_document_t* doc, const char* name)
