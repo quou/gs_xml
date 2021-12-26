@@ -62,11 +62,6 @@ void init()
         print_xml_node(node, 0);
     }
 
-    for (struct gs_xml_node_iter_t it = gs_xml_new_node_iter(doc, "thing");
-        gs_xml_node_iter_next(&it);) {
-        printf("%s\n", gs_xml_find_attribute(it.current, "thing")->value.string);
-    }
-
     gs_xml_free(doc);
 }
 
