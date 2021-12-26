@@ -272,7 +272,7 @@ static gs_dyn_array(gs_xml_node_t) gs_xml_parse_block(const char* start, uint32_
 
             if (inside)
             {
-            	for (; *c != '>' && *c != ' '; c++)
+            	for (; *c != '>' && *c != ' ' && *c != '/'; c++)
                     node_name_len++;
 
                 if (*c != '>')
